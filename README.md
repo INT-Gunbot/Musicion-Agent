@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker" alt="Docker" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
   <br/>
-  <img src="https://github.com/hgsanyang/Musicion-Agent/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  <img src="https://github.com/INT-Gunbot/Musicion-Agent/actions/workflows/ci.yml/badge.svg" alt="CI" />
   <img src="https://img.shields.io/badge/tests-333_passed-brightgreen?logo=pytest" alt="Tests" />
   <img src="https://img.shields.io/badge/code_style-ruff-261230?logo=ruff" alt="Ruff" />
 </p>
