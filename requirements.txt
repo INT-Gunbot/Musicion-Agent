@@ -1,0 +1,79 @@
+# Music Agent 依赖包
+
+# 核心框架
+langchain>=0.1.0
+langchain-openai>=0.1.0
+langchain-core>=0.1.0
+langgraph>=0.1.0
+
+# LLM和嵌入
+openai>=1.0.0
+
+# 网络搜索
+aiohttp>=3.8.0
+beautifulsoup4>=4.12.0
+
+# 配置管理
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# 数据处理
+numpy>=1.24.0
+
+# 其他工具
+requests>=2.31.0
+asyncio-throttle>=1.0.0
+
+# API服务器
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# --- 补充依赖 ---
+# Aliyun 大模型 API 库
+dashscope
+
+# 音频处理与特征提取
+librosa>=0.11.0
+
+# 统一大模型调用接口
+litellm>=1.81.0
+langchain-litellm>=0.6.0
+
+# 图数据库客户端
+neo4j>=5.0.0
+
+# 处理 Jupyter/特定环境下的异步嵌套
+nest_asyncio>=1.5.0
+
+# 文本及音频嵌入模型
+sentence-transformers>=3.0.0
+muq==0.1.0
+
+# Token 计数工具
+tiktoken>=0.7.0
+
+# PyTorch 深度学习运算及音频处理后端
+torch>=2.2.0
+torchaudio>=2.2.0
+
+# 命令行进度条
+tqdm>=4.60.0
+
+# HuggingFace 模型工具
+transformers>=4.40.0
+
+# HTTP 客户端依赖
+urllib3>=2.0.0
+
+# 文件系统变动监控
+watchdog>=4.0.0
+
+# ============================================================
+# 已于 2026-06 清理的未使用依赖（全项目零 import，含 scripts/shell）：
+#   streamlit, pandas, gdown, spotipy, mcp,
+#   llama-index, llama-index-embeddings-openai,
+#   llama-index-vector-stores-chroma, chromadb
+# 向量检索早已迁移至 Neo4j Native Vector；前端为 Next.js（非 streamlit）。
+# 如恢复某项功能，按需单独 pip install 即可。
+# ============================================================

@@ -1,0 +1,150 @@
+{
+  "description": "Musicion 离线评测 — 20 条测试 Query + Ground Truth 标注",
+  "queries": [
+    {
+      "id": "Q01",
+      "query": "适合夏天自驾的欢快中文歌",
+      "intent": "hybrid_search",
+      "ground_truth": ["阳光宅男", "稻香", "小幸运", "起风了", "晴天"],
+      "tags": {"genres": ["pop"], "moods": ["happy"], "scenarios": ["driving"], "language": "chinese"}
+    },
+    {
+      "id": "Q02",
+      "query": "推荐周杰伦的中国风歌曲",
+      "intent": "graph_search",
+      "ground_truth": ["青花瓷", "东风破", "发如雪", "菊花台", "兰亭序"],
+      "tags": {"artist_entities": ["周杰伦"], "genres": ["chinese style"]}
+    },
+    {
+      "id": "Q03",
+      "query": "深夜一个人听的很丧的英文歌",
+      "intent": "hybrid_search",
+      "ground_truth": ["Someone Like You", "Fix You", "Creep", "Hurt", "The Night We Met"],
+      "tags": {"moods": ["melancholy"], "scenarios": ["late night"], "language": "english"}
+    },
+    {
+      "id": "Q04",
+      "query": "有没有适合健身时候听的电音",
+      "intent": "vector_search",
+      "ground_truth": ["Animals", "Don't You Worry Child", "Wake Me Up", "Titanium", "Levels"],
+      "tags": {"genres": ["electronic"], "scenarios": ["workout"], "language": "english"}
+    },
+    {
+      "id": "Q05",
+      "query": "类似告五人风格的台团推荐",
+      "intent": "vector_search",
+      "ground_truth": ["披星戴月的想你", "丑奴儿", "浪子回头", "爱人错过", "带我去找夜生活"],
+      "tags": {"region": "taiwan", "genres": ["indie"]}
+    },
+    {
+      "id": "Q06",
+      "query": "下雨天在家发呆听的轻音乐",
+      "intent": "hybrid_search",
+      "ground_truth": ["River Flows in You", "Kiss the Rain", "Comptine d'un autre ete", "A Thousand Years", "Clair de Lune"],
+      "tags": {"moods": ["peaceful"], "scenarios": ["rainy day"], "genres": ["classical", "ambient"]}
+    },
+    {
+      "id": "Q07",
+      "query": "最近很火的抖音热歌",
+      "intent": "web_search",
+      "ground_truth": [],
+      "tags": {"use_web_search": true}
+    },
+    {
+      "id": "Q08",
+      "query": "适合上班通勤听的日文歌",
+      "intent": "hybrid_search",
+      "ground_truth": ["Lemon", "Pretender", "夜に駆ける", "紅蓮華", "KING"],
+      "tags": {"language": "japanese", "scenarios": ["commute"]}
+    },
+    {
+      "id": "Q09",
+      "query": "粤语经典老歌",
+      "intent": "graph_search",
+      "ground_truth": ["海阔天空", "光辉岁月", "千千阙歌", "红日", "富士山下"],
+      "tags": {"language": "cantonese"}
+    },
+    {
+      "id": "Q10",
+      "query": "适合咖啡厅的背景音乐 不吵不闹",
+      "intent": "hybrid_search",
+      "ground_truth": ["Sunday Morning", "Put Your Records On", "Banana Pancakes", "Budapest", "The Girl from Ipanema"],
+      "tags": {"moods": ["relaxing"], "scenarios": ["work"], "vibe": "acoustic", "avoid": ["energetic"]}
+    },
+    {
+      "id": "Q11",
+      "query": "和晴天风格相似的歌",
+      "intent": "vector_search",
+      "ground_truth": ["七里香", "简单爱", "遇见", "那些年", "小情歌"],
+      "tags": {"song_entities": ["晴天"]}
+    },
+    {
+      "id": "Q12",
+      "query": "K-Pop女团热门歌曲",
+      "intent": "graph_search",
+      "ground_truth": ["DDU-DU DDU-DU", "Kill This Love", "Next Level", "Attention", "After LIKE"],
+      "tags": {"genres": ["k-pop"], "region": "korea"}
+    },
+    {
+      "id": "Q13",
+      "query": "有什么好听的民谣",
+      "intent": "graph_search",
+      "ground_truth": ["成都", "南山南", "理想三旬", "春风十里", "夜空中最亮的星"],
+      "tags": {"genres": ["folk"]}
+    },
+    {
+      "id": "Q14",
+      "query": "听完想哭的治愈系歌曲",
+      "intent": "hybrid_search",
+      "ground_truth": ["后来", "十年", "好久不见", "突然好想你", "说好的幸福呢"],
+      "tags": {"moods": ["healing", "nostalgic"], "language": "chinese"}
+    },
+    {
+      "id": "Q15",
+      "query": "适合求婚的浪漫英文歌",
+      "intent": "hybrid_search",
+      "ground_truth": ["Marry You", "Perfect", "All of Me", "A Thousand Years", "Marry Me"],
+      "tags": {"moods": ["romantic"], "scenarios": ["party"], "language": "english"}
+    },
+    {
+      "id": "Q16",
+      "query": "爵士咖啡馆背景",
+      "intent": "vector_search",
+      "ground_truth": ["Fly Me to the Moon", "My Funny Valentine", "Autumn Leaves", "Summertime", "Take Five"],
+      "tags": {"genres": ["jazz"], "scenarios": ["work"]}
+    },
+    {
+      "id": "Q17",
+      "query": "公路旅行听的摇滚乐",
+      "intent": "hybrid_search",
+      "ground_truth": ["Born to Run", "Highway to Hell", "Sweet Child O' Mine", "Livin' on a Prayer", "Don't Stop Believin'"],
+      "tags": {"genres": ["rock"], "scenarios": ["travel"]}
+    },
+    {
+      "id": "Q18",
+      "query": "最近失眠 来点助眠音乐",
+      "intent": "hybrid_search",
+      "ground_truth": ["Weightless", "Gymnopedie No.1", "Spiegel im Spiegel", "Dream 3", "Ambient 1: Music for Airports"],
+      "tags": {"moods": ["peaceful", "dreamy"], "scenarios": ["sleep"], "genres": ["ambient"]}
+    },
+    {
+      "id": "Q19",
+      "query": "中文说唱推荐",
+      "intent": "graph_search",
+      "ground_truth": ["经济舱", "我的新衣", "飘向北方", "目不转睛", "星球坠落"],
+      "tags": {"genres": ["hip-hop"], "language": "chinese"}
+    },
+    {
+      "id": "Q20",
+      "query": "来点我的收藏",
+      "intent": "favorites",
+      "ground_truth": [],
+      "tags": {}
+    }
+  ],
+  "notes": {
+    "ground_truth_source": "手工标注，基于常见音乐推荐场景",
+    "recall_k_values": [5, 10, 20, 50],
+    "evaluation_metrics": ["Recall@K", "MRR", "NDCG@10", "Hit Rate@50"]
+  }
+}

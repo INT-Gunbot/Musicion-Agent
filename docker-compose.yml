@@ -1,0 +1,214 @@
+# ============================================================
+# Musicion-Agent Docker Compose
+# 一键启动所有服务: docker compose up -d
+# ============================================================
+
+name: musicion-agent
+
+services:
+  # ---- Neo4j 图数据库 ----
+  neo4j:
+    image: neo4j:2026-enterprise
+    container_name: musicion-neo4j
+    ports:
+      - "7474:7474"       # Neo4j Browser (http://localhost:7474)
+      - "7687:7687"       # Bolt 协议
+    environment:
+      # ★ 口令从 .env 读取（NEO4J_PASSWORD）。首次部署请在 .env 设置强口令；下方默认仅为本地开发兜底。
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-changeme_dev_only}
+      NEO4J_ACCEPT_LICENSE_AGREEMENT: "eval"   # Enterprise 评估许可证（非商业免费）
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1G
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      # 如果有 dump 文件，挂载到 /seed 用于首次恢复
+      # - ./docker/neo4j-seed:/seed
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---- GraphZep 记忆旁路（可选）----
+  # 默认 CPU/GPU 启动不依赖它。需要自然语言 episodic 记忆时：
+  #   $env:MEMORY_EPISODIC_BACKENDS="graphzep"
+  #   docker compose --profile memory up -d graphzep
+  graphzep:
+    profiles: ["memory"]
+    build: ./graphzep_service
+    container_name: musicion-graphzep
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    ports:
+      - "3100:3100"
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: "${NEO4J_PASSWORD:-changeme_dev_only}"
+      OPENAI_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      OPENAI_API_KEY: ${DASHSCOPE_API_KEY}
+      MODEL_NAME: ${GRAPHZEP_MODEL_NAME:-qwen3.7-plus}
+      EMBEDDING_MODEL_NAME: ${EMBEDDING_MODEL_NAME:-BAAI/bge-m3}
+      PORT: "3100"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ---- Qdrant 知识库向量后端（默认启动的 RAG 服务）----
+  # SQLite 保存可审计原文与来源；Qdrant 保存知识卡摘要向量，
+  # 供 Catalog Gap / 歌手背景 / 风格知识查询做语义召回。
+  qdrant:
+    profiles: ["rag"]
+    image: ${QDRANT_IMAGE:-qdrant/qdrant:v1.15.5}
+    container_name: musicion-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  # ---- Python 后端 API ----
+  backend:
+    build: .
+    container_name: musicion-backend
+    # 运行时从项目私有 .env 注入密钥；.env 已被 Git 与 Docker build context 排除。
+    # 使用 env_file 可避免宿主机同名环境变量覆盖项目内的私有配置。
+    env_file:
+      - .env
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: "${NEO4J_PASSWORD:-changeme_dev_only}"
+      GRAPHZEP_BASE_URL: http://graphzep:3100
+      MEMORY_EPISODIC_BACKENDS: ${MEMORY_EPISODIC_BACKENDS:-}
+      MODEL_NAME: ${MODEL_NAME:-qwen3.7-plus}
+      # musicion.ps1 按 CPU/GPU profile 注入 m2d/muq；直接 compose 时可由 .env 覆盖。
+      DENSE_TEXT_AUDIO_BACKEND: ${DENSE_TEXT_AUDIO_BACKEND:-m2d}
+      MUSIC_M2D_MODEL_WARMUP: ${MUSIC_M2D_MODEL_WARMUP:-true}
+      MUSIC_AUDIO_DATA_DIR: /app/data/processed_audio/audio
+      MUSIC_DATA_ROOT: /app/data
+      MUSIC_FEEDBACK_DIR: /app/data/feedback
+      MUSIC_KNOWLEDGE_STORE_PATH: /app/data/knowledge_cache/music_knowledge.sqlite
+      MUSIC_KNOWLEDGE_CACHE_PATH: /app/data/knowledge_cache/music_knowledge.jsonl
+      MUSIC_KNOWLEDGE_VECTOR_BACKEND: ${MUSIC_KNOWLEDGE_VECTOR_BACKEND:-qdrant}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      MUSIC_KNOWLEDGE_QDRANT_COLLECTION: ${MUSIC_KNOWLEDGE_QDRANT_COLLECTION:-musicion_music_knowledge}
+      MUSIC_KNOWLEDGE_QDRANT_TIMEOUT_SECONDS: ${MUSIC_KNOWLEDGE_QDRANT_TIMEOUT_SECONDS:-0.8}
+      FEEDBACK_LOG_RAW_QUERY: ${FEEDBACK_LOG_RAW_QUERY:-0}
+      MUSIC_WEB_SEARCH_ENABLED: "1"
+      MUSIC_INLINE_INGEST_ENABLED: "0"
+      MUSIC_INGEST_QUEUE_DIR: /app/data/ingest_queue
+      NETEASE_API_BASE: http://netease:3000
+      # 默认允许缺失的 HuggingFace 文本编码器自动下载，保证 CPU/GPU 一键启动后向量检索可用。
+      # 如需完全离线运行，可在 .env 设置 HF_OFFLINE=true 并提前准备本地缓存。
+      HF_OFFLINE: ${HF_OFFLINE:-false}
+      HF_HOME: /root/.cache/huggingface
+      HF_HUB_CACHE: /root/.cache/huggingface/hub
+      HF_ENDPOINT: ${HF_ENDPOINT:-https://huggingface.co}
+      HF_HUB_DISABLE_XET: ${HF_HUB_DISABLE_XET:-1}
+      # 本地模型推理（可选，通过宿主机暴露的 vLLM 端口）
+      VLLM_BASE_URL: ${VLLM_BASE_URL:-http://host.docker.internal:8000/v1}
+    volumes:
+      # 音乐数据：挂载宿主机的音频/封面/歌词目录
+      - ${MUSIC_DATA_PATH:-./data}:/app/data
+      # M2D-CLAP 模型权重：挂载宿主机缓存，供语义精排与 MuQ 失败回退使用。
+      - ${M2D_CLAP_CACHE:-~/.cache/m2d_clap}:/root/.cache/m2d_clap
+      # HuggingFace 模型缓存：包含 MuQ-MuLan 权重，避免容器重复下载。
+      - ${HF_HOME:-~/.cache/huggingface}:/root/.cache/huggingface
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s  # 模型默认懒加载；健康检查不等待模型权重加载。
+
+  # ---- 离线音乐增强 Worker（GPU 模式）----
+  # 在线 API 只写元数据和任务队列；该 Worker 独立完成歌词标签与音频向量提取。
+  ingest-worker:
+    profiles: ["gpu"]
+    build: .
+    container_name: musicion-ingest-worker
+    command: ["python", "scripts/ingest_worker.py", "--watch"]
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: "${NEO4J_PASSWORD:-changeme_dev_only}"
+      MUSIC_INGEST_QUEUE_DIR: /app/data/ingest_queue
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+      HF_OFFLINE: ${HF_OFFLINE:-false}
+      HF_HOME: /root/.cache/huggingface
+      HF_HUB_CACHE: /root/.cache/huggingface/hub
+      HF_ENDPOINT: ${HF_ENDPOINT:-https://huggingface.co}
+      HF_HUB_DISABLE_XET: ${HF_HUB_DISABLE_XET:-1}
+    volumes:
+      - ${MUSIC_DATA_PATH:-./data}:/app/data
+      - ${M2D_CLAP_CACHE:-~/.cache/m2d_clap}:/root/.cache/m2d_clap
+      - ${HF_HOME:-~/.cache/huggingface}:/root/.cache/huggingface
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"from pathlib import Path; Path('/app/data/ingest_queue').mkdir(parents=True, exist_ok=True)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ---- 联网元搜索（CPU / GPU 模式）----
+  searxng:
+    profiles: ["cpu", "gpu"]
+    image: searxng/searxng:latest
+    container_name: musicion-searxng
+    ports:
+      - "8888:8080"
+    restart: unless-stopped
+
+  # ---- 网易云音乐代理（CPU / GPU 模式）----
+  netease:
+    profiles: ["cpu", "gpu"]
+    image: binaryify/netease_cloud_music_api:v4.26.0
+    container_name: musicion-netease
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # ---- Next.js 前端 ----
+  frontend:
+    build: ./web
+    container_name: musicion-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3003:3003"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8501
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  qdrant_data:
